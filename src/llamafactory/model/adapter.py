@@ -203,10 +203,13 @@ def _setup_lora_tuning(
         else:
             target_modules = finetuning_args.lora_target
 
-        if finetuning_args.use_llama_pro:
-            target_modules = find_expanded_modules(model, target_modules, finetuning_args.freeze_trainable_layers)
+        if len(finetuning_args.lora_target) == 1 and finetuning_args.lora_target[0].startswith("re:"):
+            target_modules = finetuning_args.lora_target[0][3:]
+        else:
+            if finetuning_args.use_llama_pro:
+                target_modules = find_expanded_modules(model, target_modules, finetuning_args.freeze_trainable_layers)
 
-        target_modules = patch_target_modules(model, finetuning_args, target_modules)
+            target_modules = patch_target_modules(model, finetuning_args, target_modules)
 
         if (
             finetuning_args.use_dora
