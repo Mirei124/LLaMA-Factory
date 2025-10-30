@@ -14,6 +14,7 @@
 
 import gc
 import json
+import os
 from typing import Optional
 
 import av
@@ -113,7 +114,7 @@ def vllm_infer(
         "enable_lora": model_args.adapter_name_or_path is not None,
     }
     if template_obj.mm_plugin.__class__.__name__ != "BasePlugin":
-        engine_args["limit_mm_per_prompt"] = {"image": 4, "video": 2, "audio": 2}
+        engine_args["limit_mm_per_prompt"] = {"image": 9, "video": 2, "audio": 2}
 
     if isinstance(model_args.vllm_config, dict):
         engine_args.update(model_args.vllm_config)
@@ -220,6 +221,9 @@ def vllm_infer(
         gc.collect()
 
     # Write all results at once outside the loop
+    save_dir = os.path.dirname(save_name)
+    if not os.path.isdir(save_dir):
+        os.makedirs(save_dir)
     with open(save_name, "w", encoding="utf-8") as f:
         for text, pred, label in zip(all_prompts, all_preds, all_labels):
             f.write(json.dumps({"prompt": text, "predict": pred, "label": label}, ensure_ascii=False) + "\n")
