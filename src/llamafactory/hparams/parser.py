@@ -17,6 +17,7 @@
 
 import os
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional, Union
 
@@ -46,9 +47,17 @@ logger = logging.get_logger(__name__)
 check_dependencies()
 
 
+@dataclass
+class SeedArguments:
+    seed: int = field(
+        default=42,
+        metadata={"help": "Random seed to be used with data loaders."},
+    )
+
+
 _TRAIN_ARGS = [ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
 _TRAIN_CLS = tuple[ModelArguments, DataArguments, TrainingArguments, FinetuningArguments, GeneratingArguments]
-_INFER_ARGS = [ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
+_INFER_ARGS = [ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments, SeedArguments]
 _INFER_CLS = tuple[ModelArguments, DataArguments, FinetuningArguments, GeneratingArguments]
 _EVAL_ARGS = [ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
 _EVAL_CLS = tuple[ModelArguments, DataArguments, EvaluationArguments, FinetuningArguments]
@@ -464,7 +473,7 @@ def get_train_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
 
 
 def get_infer_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _INFER_CLS:
-    model_args, data_args, finetuning_args, generating_args = _parse_infer_args(args)
+    model_args, data_args, finetuning_args, generating_args, seed_args = _parse_infer_args(args)
 
     # Setup logging
     _set_transformers_logging()
@@ -494,6 +503,8 @@ def get_infer_args(args: Optional[Union[dict[str, Any], list[str]]] = None) -> _
             model_args.model_max_length = data_args.cutoff_len
     else:
         model_args.device_map = "auto"
+
+    transformers.set_seed(seed_args.seed)
 
     return model_args, data_args, finetuning_args, generating_args
 
